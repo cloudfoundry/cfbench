@@ -3,9 +3,9 @@ package bench_test
 import (
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/gogo/protobuf/proto"
+	. "github.com/masters-of-cats/cfbench/bench"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	. "github.com/teddyking/cfbench/bench"
 )
 
 var _ = Describe("Phase", func() {

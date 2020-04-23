@@ -12,9 +12,9 @@ import (
 
 	"github.com/cloudfoundry/noaa/consumer"
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/teddyking/cfbench/bench"
-	"github.com/teddyking/cfbench/cf"
-	"github.com/teddyking/cfbench/datadog"
+	"github.com/masters-of-cats/cfbench/bench"
+	"github.com/masters-of-cats/cfbench/cf"
+	"github.com/masters-of-cats/cfbench/datadog"
 )
 
 func main() {

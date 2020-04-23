@@ -3,7 +3,7 @@ package datadog
 import (
 	"time"
 
-	"github.com/teddyking/cfbench/bench"
+	"github.com/masters-of-cats/cfbench/bench"
 )
 
 type Point [2]int64
