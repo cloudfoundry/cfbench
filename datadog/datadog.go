@@ -20,7 +20,7 @@ type JsonResult struct {
 	Series []MetricSeries `json:"series"`
 }
 
-func BuildJSONOutput(phases bench.Phases, tags []string) JsonResult {
+func BuildJSONOutput(hostName string, phases bench.Phases) JsonResult {
 	timeOfTest := time.Now().Unix()
 	result := JsonResult{}
 	for _, phase := range phases {
@@ -33,7 +33,7 @@ func BuildJSONOutput(phases bench.Phases, tags []string) JsonResult {
 				Point{timeOfTest, int64(phase.Duration())},
 			},
 			Type: "gauge",
-			Tags: tags,
+			Tags: []string{hostName},
 		}
 		result.Series = append(result.Series, newSeries)
 	}

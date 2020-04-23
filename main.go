@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -15,6 +14,7 @@ import (
 	"github.com/masters-of-cats/cfbench/bench"
 	"github.com/masters-of-cats/cfbench/cf"
 	"github.com/masters-of-cats/cfbench/datadog"
+	"github.com/masters-of-cats/cfbench/wavefront"
 )
 
 func main() {
@@ -33,11 +33,9 @@ func main() {
 	dopplerAddress := flag.String("doppler-address", "", "doppler address")
 	var instances int
 	flag.IntVar(&instances, "instances", 1, "scale app after pushing")
-	var tags tagList
-	flag.Var(&tags, "tag", "a tag, can be specified multiple times")
 
-	var jsonOutput bool
-	flag.BoolVar(&jsonOutput, "json", false, "Generate datadog-compatible JSON output on stdout")
+	outputFormat := flag.String("output-format", "", "Output format, possible values are 'wavefront' or 'datadog'")
+	hostName := flag.String("host-name", "", "Metric source host name")
 
 	flag.Parse()
 
@@ -53,6 +51,7 @@ func main() {
 		log.Println("Pushing the app outside measurment time")
 		must("pushing app", cf.Push(appName, *appDir, *stack, *buildpack, *startCommand))
 		appGuid, err = cf.AppGuid(appName)
+		mustNot("getting app GUID", err)
 	}
 
 	//Start Firehose
@@ -88,6 +87,7 @@ func main() {
 		phases = bench.ExtractBenchmarkPush(appGuid, instances)
 	case "scale":
 		appGuid, err = cf.AppGuid(appName)
+		mustNot("getting app GUID", err)
 		err := cf.Scale(appName, instances)
 		mustNot("scaling app", err)
 		phases = bench.ExtractBenchmarkScale(appGuid, instances)
@@ -116,12 +116,13 @@ func main() {
 	must("deleting app", cf.Delete(appName))
 	must("purge routes", cf.PurgeRoutes())
 
-	if jsonOutput {
-		jsonResult := datadog.BuildJSONOutput(phases, tags)
+	switch *outputFormat {
+	case "datadog":
+		jsonResult := datadog.BuildJSONOutput(*hostName, phases)
 		err = json.NewEncoder(os.Stdout).Encode(jsonResult)
-		if err != nil {
-			panic(err)
-		}
+		mustNot("marshalling datadog json output", err)
+	case "wavefront":
+		fmt.Print(wavefront.BuildWavefrontOutput(*hostName, phases))
 	}
 }
 
@@ -142,18 +143,3 @@ func mustNot(action string, err error) {
 }
 
 var must = mustNot
-
-type tagList []string
-
-func (p *tagList) String() string {
-	return fmt.Sprintf("%v", *p)
-}
-
-func (p *tagList) Set(tag string) error {
-	if tag == "" {
-		return errors.New("Cannot set blank tag")
-	}
-
-	*p = append(*p, tag)
-	return nil
-}
